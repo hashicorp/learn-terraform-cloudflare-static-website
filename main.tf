@@ -55,6 +55,28 @@ resource "aws_acm_certificate_validation" "cert" {
   certificate_arn = aws_acm_certificate.cert.arn
 }
 
+resource "cloudflare_record" "acm" {
+  zone_id = var.cloudflare_zone_id
+
+  // Cloudflare doesn't support `allow_overwrite` field like the route53_record 
+  // resource; as a result, this configuration hardcodes the first record to 
+  // verify the ACM certificate.
+  // for_each = {
+  //   for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+  //     name   = dvo.resource_record_name
+  //     record = dvo.resource_record_value
+  //     type   = dvo.resource_record_type
+  //   }
+  // }
+
+  name  = aws_acm_certificate.cert.domain_validation_options.*.resource_record_name[0]
+  type  = aws_acm_certificate.cert.domain_validation_options.*.resource_record_type[0]
+  value = trimsuffix(aws_acm_certificate.cert.domain_validation_options.*.resource_record_value[0], ".")
+
+  // Must be set to false. ACM validation false otherwise
+  proxied = false
+}
+
 // This configuration uses Cloudfront defaults
 // Cloudfront is required for static site hosting with S3 if bucket name is
 // already taken.
@@ -102,28 +124,6 @@ resource "aws_cloudfront_distribution" "dist" {
     acm_certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
     ssl_support_method  = "sni-only"
   }
-}
-
-resource "cloudflare_record" "acm" {
-  zone_id = var.cloudflare_zone_id
-
-  // Cloudflare doesn't support `allow_overwrite` field like the route53_record 
-  // resource; as a result, this configuration hardcodes the first record to 
-  // verify the ACM certificate.
-  // for_each = {
-  //   for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
-  //     name   = dvo.resource_record_name
-  //     record = dvo.resource_record_value
-  //     type   = dvo.resource_record_type
-  //   }
-  // }
-
-  name  = aws_acm_certificate.cert.domain_validation_options.*.resource_record_name[0]
-  type  = aws_acm_certificate.cert.domain_validation_options.*.resource_record_type[0]
-  value = trimsuffix(aws_acm_certificate.cert.domain_validation_options.*.resource_record_value[0], ".")
-
-  // Must be set to false. ACM validation false otherwise
-  proxied = false
 }
 
 resource "cloudflare_record" "site_cname" {
