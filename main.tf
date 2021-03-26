@@ -55,8 +55,14 @@ resource "aws_acm_certificate_validation" "cert" {
   certificate_arn = aws_acm_certificate.cert.arn
 }
 
+data "cloudflare_zones" "domain" {
+  filter {
+    name = var.site_domain
+  }
+}
+
 resource "cloudflare_record" "acm" {
-  zone_id = var.cloudflare_zone_id
+  zone_id = data.cloudflare_zones.domain.zones[0].id
 
   // Cloudflare doesn't support `allow_overwrite` field like the route53_record 
   // resource; as a result, this configuration hardcodes the first record to 
@@ -127,7 +133,7 @@ resource "aws_cloudfront_distribution" "dist" {
 }
 
 resource "cloudflare_record" "site_cname" {
-  zone_id = var.cloudflare_zone_id
+  zone_id = data.cloudflare_zones.domain.zones[0].id
   name    = var.site_domain
   value   = aws_cloudfront_distribution.dist.domain_name
   type    = "CNAME"
@@ -137,7 +143,7 @@ resource "cloudflare_record" "site_cname" {
 }
 
 resource "cloudflare_record" "www" {
-  zone_id = var.cloudflare_zone_id
+  zone_id = data.cloudflare_zones.domain.zones[0].id
   name    = "www"
   value   = aws_cloudfront_distribution.dist.domain_name
   type    = "CNAME"
