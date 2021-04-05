@@ -8,11 +8,6 @@ output "bucket_endpoint" {
   value       = aws_s3_bucket.site.website_endpoint
 }
 
-output "cloudfront_endpoint" {
-  description = "Cloudfront endpoint"
-  value       = aws_cloudfront_distribution.dist.domain_name
-}
-
 output "domain_name" {
   description = "Website endpoint"
   value       = var.site_domain
