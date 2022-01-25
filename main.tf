@@ -17,7 +17,6 @@ resource "aws_s3_bucket" "site" {
 resource "aws_s3_bucket" "www" {
   bucket = "www.${var.site_domain}"
   acl    = "private"
-  policy = ""
 
   website {
     redirect_all_requests_to = "https://${var.site_domain}"
