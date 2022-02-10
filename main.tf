@@ -14,16 +14,29 @@ locals {
 
 resource "aws_s3_bucket" "site" {
   bucket = local.bucket_name
-  acl    = "public-read"
+}
 
-  website {
-    index_document = "index.html"
-    error_document = "index.html"
+resource "aws_s3_bucket_website_configuration" "site" {
+  bucket = aws_s3_bucket.site.id
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "error.html"
   }
 }
 
-resource "aws_s3_bucket_policy" "public_read" {
+resource "aws_s3_bucket_acl" "site" {
   bucket = aws_s3_bucket.site.id
+
+  acl = "public-read"
+}
+
+resource "aws_s3_bucket_policy" "site" {
+  bucket = aws_s3_bucket.site.id
+
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
