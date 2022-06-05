@@ -57,7 +57,7 @@ resource "aws_s3_bucket_acl" "www" {
 }
 
 resource "aws_s3_bucket_website_configuration" "www" {
-  bucket = aws_s3_bucket.site.id
+  bucket = aws_s3_bucket.www.id
 
   redirect_all_requests_to {
     host_name = var.site_domain
@@ -73,7 +73,7 @@ data "cloudflare_zones" "domain" {
 resource "cloudflare_record" "site_cname" {
   zone_id = data.cloudflare_zones.domain.zones[0].id
   name    = var.site_domain
-  value   = aws_s3_bucket.site.website_endpoint
+  value   = aws_s3_bucket_website_configuration.site.website_endpoint
   type    = "CNAME"
 
   ttl     = 1
