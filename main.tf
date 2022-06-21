@@ -101,7 +101,7 @@ resource "cloudflare_record" "acm" {
 // already taken.
 resource "aws_cloudfront_distribution" "dist" {
   origin {
-    domain_name = aws_s3_bucket.site.website_endpoint
+    domain_name = aws_s3_bucket_website_configuration.site.website_endpoint
     origin_id   = aws_s3_bucket.site.id
     custom_origin_config {
       http_port              = "80"
