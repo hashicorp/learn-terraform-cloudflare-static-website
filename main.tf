@@ -11,6 +11,15 @@ resource "aws_s3_bucket" "site" {
   bucket = var.site_domain
 }
 
+resource "aws_s3_bucket_public_access_block" "site" {
+  bucket = aws_s3_bucket.site.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
 resource "aws_s3_bucket_website_configuration" "site" {
   bucket = aws_s3_bucket.site.id
 
@@ -23,10 +32,21 @@ resource "aws_s3_bucket_website_configuration" "site" {
   }
 }
 
+resource "aws_s3_bucket_ownership_controls" "site" {
+  bucket = aws_s3_bucket.site.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
 resource "aws_s3_bucket_acl" "site" {
   bucket = aws_s3_bucket.site.id
 
   acl = "public-read"
+  depends_on = [
+    aws_s3_bucket_ownership_controls.site,
+    aws_s3_bucket_public_access_block.site
+  ]
 }
 
 resource "aws_s3_bucket_policy" "site" {
@@ -47,24 +67,10 @@ resource "aws_s3_bucket_policy" "site" {
       },
     ]
   })
-}
 
-resource "aws_s3_bucket" "www" {
-  bucket = "www.${var.site_domain}"
-}
-
-resource "aws_s3_bucket_acl" "www" {
-  bucket = aws_s3_bucket.www.id
-
-  acl = "private"
-}
-
-resource "aws_s3_bucket_website_configuration" "www" {
-  bucket = aws_s3_bucket.www.id
-
-  redirect_all_requests_to {
-    host_name = var.site_domain
-  }
+  depends_on = [
+    aws_s3_bucket_public_access_block.site
+  ]
 }
 
 data "cloudflare_zones" "domain" {
